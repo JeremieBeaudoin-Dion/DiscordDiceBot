@@ -1,7 +1,7 @@
 import diceRoll
 
 
-class DiceHistory():
+class DiceHistory:
     def __init__(self):
         self.allDice = []
 
@@ -72,6 +72,7 @@ def test():
     dh.addDice(dice3)
 
     print(dh.getStats())
+
 
 def test2():
 

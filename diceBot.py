@@ -3,12 +3,16 @@
 import discord
 import diceRoll
 import diceHistory
+import discordInformation
+import discordToDriveLink
 
-TOKEN = '####'
+TOKEN = discordInformation.getToken()
 
 client = discord.Client()
-
 diceHistory = diceHistory.DiceHistory()
+
+discordToDriveLink = discordToDriveLink.Holder()
+
 
 @client.event
 async def on_message(message):
@@ -42,11 +46,6 @@ async def on_message(message):
         msg = 'Hello {0.author.mention}'.format(message)
         await client.send_message(message.channel, msg)
 
-    if content_lowercase.startswith('!test'):
-        msg = '1.. 2.. testing... '.format(message)
-        await client.delete_message(message)
-        await client.send_message(client.get_channel(id='####'), msg)  # send to Robot test
-
     if content_lowercase.startswith('!x'):
         msg = '{0.author.mention}, by X, I meant anything'.format(message)
         await client.send_message(message.channel, msg)
@@ -75,17 +74,6 @@ async def on_message(message):
 
         await client.send_message(message.channel, embed=embed)
 
-    if content_lowercase.startswith('+'):
-        pass
-
-    if content_lowercase.startswith('!sroll'):
-        msg = roll_dice(message)
-        author = message.author
-
-        await client.delete_message(message)
-        await client.send_message(author, msg)  # Send to author
-        await client.send_message(get_gm(), msg)  # Send to game master
-
     if content_lowercase.startswith('!whisper'):
 
         msg = message.content.replace("!whisper", "")
@@ -93,18 +81,26 @@ async def on_message(message):
         msg = msg.format(message)
 
         await client.delete_message(message)
-        await client.send_message(get_gm(), msg)  # Send to game master
+        await client.send_message(getMember(discordInformation.getGMKey()), msg)  # Send to game master
 
     if content_lowercase.startswith('!delete'):
         await client.delete_message(message)
+
+    if content_lowercase.startswith('!about'):
+        msg = "-" + message.content.replace("!about ", "")
+        await client.send_message(message.channel, msg)
 
     if content_lowercase.startswith('!roll'):
         msg = roll_dice(message)
         await client.send_message(message.channel, msg)
 
-    if content_lowercase.startswith('!about'):
-        msg = "-" + message.content.replace("!about ", "")
-        await client.send_message(message.channel, msg)
+    if content_lowercase.startswith('!sroll'):
+        msg = roll_dice(message)
+        author = message.author
+
+        await client.delete_message(message)
+        await client.send_message(author, msg)  # Send to author
+        await client.send_message(getMember(discordInformation.getGMKey()), msg)  # Send to game master
 
 
 def roll_dice(message):
@@ -113,7 +109,10 @@ def roll_dice(message):
     dice = diceRoll.Dice()
 
     if len(words) == 2:
-        dice.setNumOfDice(words[1])
+        if discordToDriveLink.isAnAttribute(words[1]):
+            dice.setNumOfDice(discordToDriveLink.getAttribute(str(message.author), words[1]))
+        else:
+            dice.setNumOfDice(words[1])
 
     if len(words) == 3:
         dice.setNumOfDice(words[1])
@@ -126,8 +125,8 @@ def roll_dice(message):
     return dice.getMessage().format(message)
 
 
-def get_gm():
-    return discord.utils.get(client.get_all_members(), id='####')
+def getMember(identification):
+    return discord.utils.get(client.get_all_members(), id=identification)
 
 
 @client.event
@@ -142,3 +141,5 @@ async def on_ready():
 
 
 client.run(TOKEN)
+
+
